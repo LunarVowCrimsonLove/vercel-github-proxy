@@ -1,207 +1,211 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitHub 加速代理 - Vercel</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            line-height: 1.6;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-            color: #333;
-        }
-        header {
-            background: #007BFF;
-            color: #fff;
-            padding: 10px 0;
-            text-align: center;
-        }
-        .container {
-            width: 80%;
-            margin: auto;
-            overflow: hidden;
-            padding: 20px;
-        }
-        h1, h2 {
-            color: #007BFF;
-        }
-        .input-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        input[type='text'] {
-            width: 100%;
-            padding: 10px;
-            box-sizing: border-box;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        button {
-            background: #007BFF;
-            color: #fff;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            background: #0056b3;
-        }
-        .result {
-            margin-top: 20px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background: #fff;
-        }
-        footer {
-            text-align: center;
-            margin-top: 50px;
-            padding: 10px;
-            background: #007BFF;
-            color: #fff;
-        }
-        pre {
-            background: #eee;
-            padding: 10px;
-            border-radius: 4px;
-            overflow-x: auto;
-        }
-        a {
-            color: #007BFF;
-            text-decoration: none;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitHub 文件加速</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background-color: #f6f8fa;
+      color: #24292e;
+    }
+    .container {
+      max-width: 700px;
+      padding: 30px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #24292e;
+      font-size: 28px;
+    }
+    .input-group {
+      display: flex;
+      margin-bottom: 20px;
+    }
+    input {
+      flex: 1;
+      padding: 12px 15px;
+      border: 1px solid #e1e4e8;
+      border-radius: 6px 0 0 6px;
+      font-size: 16px;
+      transition: border-color 0.2s;
+    }
+    input:focus {
+      outline: none;
+      border-color: #0366d6;
+    }
+    button {
+      padding: 12px 25px;
+      background-color: #2ea44f;
+      color: white;
+      border: none;
+      border-radius: 0 6px 6px 0;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      transition: background-color 0.2s;
+    }
+    button:hover {
+      background-color: #2c974b;
+    }
+    .section {
+      margin-top: 25px;
+      padding-top: 20px;
+      border-top: 1px solid #e1e4e8;
+    }
+    .section h2 {
+      font-size: 20px;
+      margin-bottom: 15px;
+    }
+    .example {
+      background-color: #f6f8fa;
+      padding: 15px;
+      border-radius: 6px;
+      margin-top: 15px;
+      font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+      word-break: break-all;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .example-title {
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 30px;
+      font-size: 14px;
+      color: #586069;
+    }
+    .footer a {
+      color: #0366d6;
+      text-decoration: none;
+    }
+    .footer a:hover {
+      text-decoration: underline;
+    }
+    .note {
+      background-color: #fffbdd;
+      border-left: 4px solid #ffd33d;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 3px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      background-color: #0366d6;
+      color: white;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-right: 5px;
+    }
+    @media (max-width: 700px) {
+      .container {
+        width: 95%;
+        padding: 20px;
+      }
+    }
+  </style>
 </head>
 <body>
-    <header>
-        <h1>GitHub 加速代理服务</h1>
-        <p>快速下载 GitHub 文件，加速您的开发流程</p>
-    </header>
-
-    <div class="container">
-        <section>
-            <h2>功能介绍</h2>
-            <ul>
-                <li>加速 GitHub Release、Archive、Raw、Blob 等资源下载</li>
-                <li>支持 Git Clone 加速</li>
-                <li>支持访问私有仓库（需提供 Token）</li>
-                <li>支持 jsDelivr 镜像加速</li>
-                <li>提供简洁的 Web 界面</li>
-                <li>支持主页伪装和 302 跳转</li>
-                <li>内置爬虫屏蔽功能</li>
-            </ul>
-        </section>
-
-        <section>
-            <h2>输入 GitHub 链接</h2>
-            <div class="input-group">
-                <label for="github-url">GitHub 文件或仓库地址:</label>
-                <input type="text" id="github-url" placeholder="请输入 GitHub 链接，例如：https://github.com/user/repo/releases/download/tag/file.zip">
-            </div>
-            <div class="input-group">
-                <label for="token">GitHub Token (可选，访问私有仓库时需要):</label>
-                <input type="text" id="token" placeholder="请输入您的 GitHub Token">
-            </div>
-            <button onclick="generateProxyUrl()">生成加速链接</button>
-
-            <div id="result" class="result" style="display: none;">
-                <h3>加速链接:</h3>
-                <pre id="proxy-url"></pre>
-                <p><a href="#" id="download-link" target="_blank">点击下载文件</a></p>
-            </div>
-        </section>
-
-        <section>
-            <h2>使用示例</h2>
-            <p>以下是一些常见的使用场景示例：</p>
-            <ul>
-                <li>下载 Release 文件：输入 <code>https://github.com/user/repo/releases/download/tag/file.zip</code></li>
-                <li>下载 Raw 文件：输入 <code>https://raw.githubusercontent.com/user/repo/branch/file.txt</code></li>
-                <li>Clone 仓库：输入 <code>https://github.com/user/repo.git</code></li>
-            </ul>
-        </section>
-
-        <section>
-            <h2>注意事项</h2>
-            <ul>
-                <li>请确保输入的 GitHub 链接是完整的 URL 地址</li>
-                <li>如果您需要访问私有仓库，请提供有效的 GitHub Token</li>
-                <li>本服务仅用于加速下载，不存储任何用户数据</li>
-            </ul>
-        </section>
+  <div class="container">
+    <h1>GitHub 文件加速</h1>
+    
+    <div class="input-group">
+      <input type="text" id="github-url" placeholder="输入 GitHub 链接" autocomplete="off">
+      <button onclick="convert()">转换</button>
     </div>
-
-    <footer>
-        <p>&copy; 2023 GitHub 加速代理服务. 基于 Vercel 部署.</p>
-    </footer>
-
-    <script>
-        function generateProxyUrl() {
-            const githubUrlInput = document.getElementById('github-url');
-            const tokenInput = document.getElementById('token');
-            const resultDiv = document.getElementById('result');
-            const proxyUrlPre = document.getElementById('proxy-url');
-            const downloadLink = document.getElementById('download-link');
-            let githubUrl = githubUrlInput.value.trim();
-
-            if (!githubUrl) {
-                alert('请输入 GitHub 链接');
-                return;
-            }
-
-            // 如果输入的 URL 不完整但包含 github.com，则自动添加 https:// 前缀
-            if (githubUrl.includes('github.com') && !githubUrl.startsWith('http')) {
-                githubUrl = 'https://' + githubUrl;
-                githubUrlInput.value = githubUrl;
-            }
-
-            // 检查 URL 是否有效
-            try {
-                new URL(githubUrl);
-            } catch (e) {
-                alert('请输入有效的 GitHub 链接');
-                return;
-            }
-
-            // 生成直连格式的加速链接
-            const baseUrl = window.location.origin;
-            let proxyUrl = `${baseUrl}/${githubUrl}`;
-
-            // 如果提供了 token，则附加到 URL 参数中
-            const token = tokenInput.value.trim();
-            if (token) {
-                proxyUrl += `${proxyUrl.includes('?') ? '&' : '?'}token=${encodeURIComponent(token)}`;
-            }
-
-            // 显示结果
-            proxyUrlPre.textContent = proxyUrl;
-            downloadLink.href = proxyUrl;
-            resultDiv.style.display = 'block';
+    
+    <div class="note">
+      直接在当前域名后添加完整的 GitHub 链接即可使用加速服务
+    </div>
+    
+    <div class="section">
+      <h2>支持的链接类型</h2>
+      <div>
+        <span class="badge">Release</span>
+        <span class="badge">Archive</span>
+        <span class="badge">Raw</span>
+        <span class="badge">Blob</span>
+        <span class="badge">Gist</span>
+        <span class="badge">Tags</span>
+        <span class="badge">Clone</span>
+      </div>
+      
+      <div class="example">
+        <div class="example-title">示例链接：</div>
+        <div id="example-url"></div>
+      </div>
+    </div>
+    
+    <div class="section">
+      <h2>合法输入示例</h2>
+      <div class="example">
+        <div>- 分支源码：https://github.com/username/project/archive/master.zip</div>
+        <div>- release源码：https://github.com/username/project/archive/v0.1.0.tar.gz</div>
+        <div>- release文件：https://github.com/username/project/releases/download/v0.1.0/example.zip</div>
+        <div>- 分支文件：https://github.com/username/project/blob/master/filename</div>
+        <div>- commit文件：https://github.com/username/project/blob/1111111111111111111111111111/filename</div>
+        <div>- gist：https://gist.githubusercontent.com/username/id/raw/file.py</div>
+      </div>
+    </div>
+    
+    <div class="section">
+      <h2>私有仓库访问</h2>
+      <div class="example">
+        <div>git clone https://user:TOKEN@当前域名/https://github.com/username/repo</div>
+      </div>
+    </div>
+    
+    <div class="footer">
+      <p>GitHub 文件加速服务，加速访问 GitHub 的 release、archive、项目文件等资源</p>
+      <p>大量使用请自行部署，本站仅供演示使用</p>
+      <p>Powered by <a href="https://vercel.com" target="_blank">Vercel</a></p>
+    </div>
+  </div>
+  
+  <script>
+    // 生成示例 URL
+    const currentHost = window.location.protocol + '//' + window.location.host;
+    document.getElementById('example-url').textContent = 
+      currentHost + '/https://github.com/DustinWin/proxy-tools/releases/download/mihomo/mihomo-alpha-linux-armv8.tar.gz';
+    
+    function convert() {
+      const url = document.getElementById('github-url').value.trim();
+      if (url) {
+        // 获取当前域名作为基础 URL
+        const currentHost = window.location.protocol + '//' + window.location.host;
+        
+        // 处理输入的 GitHub URL
+        let processedUrl = url;
+        
+        // 如果 URL 不是以 http:// 或 https:// 开头，且包含 github.com，则添加 https://
+        if (!processedUrl.match(/^https?:\/\//i) && processedUrl.includes('github.com')) {
+          processedUrl = 'https://' + processedUrl;
         }
-
-        // 绑定回车键事件
-        document.getElementById('github-url').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                generateProxyUrl();
-            }
-        });
-
-        document.getElementById('token').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                generateProxyUrl();
-            }
-        });
-    </script>
+        
+        // 直接在域名后添加完整的 GitHub 链接
+        window.location.href = currentHost + '/' + processedUrl;
+      }
+    }
+    
+    document.getElementById('github-url').addEventListener('keyup', function(event) {
+      if (event.key === 'Enter') {
+        convert();
+      }
+    });
+  </script>
 </body>
 </html> 
