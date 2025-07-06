@@ -11,6 +11,12 @@
     { "source": "/api/url-test", "destination": "/api/url-test.js" },
     { "source": "/api/debug", "destination": "/api/debug.js" },
     { "source": "/api/debug/(.*)", "destination": "/api/debug.js" },
+    { "source": "/api/direct-test", "destination": "/api/direct-test.js" },
+    { "source": "/api/proxy", "destination": "/api/proxy.js" },
+    { "source": "/api/proxy/(.*)", "destination": "/api/proxy.js" },
+    { "source": "/api/direct", "destination": "/api/direct.js" },
+    { "source": "/http(.*)", "destination": "/api/direct.js" },
+    { "source": "/https(.*)", "destination": "/api/direct.js" },
     { "source": "/", "destination": "/index.html" },
     { "source": "/(.*)", "destination": "/api/index.js" }
   ],

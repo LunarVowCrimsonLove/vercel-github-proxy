@@ -183,6 +183,21 @@ function isBot(userAgent) {
   return BLOCKED_USER_AGENTS.some(botAgent => userAgent.includes(botAgent.toLowerCase()));
 }
 
+// 修复 URL 格式
+function fixUrl(url) {
+  // 确保 URL 有正确的协议格式
+  if (url.startsWith('http:/')) {
+    if (!url.startsWith('http://')) {
+      url = 'http://' + url.substring(6);
+    }
+  } else if (url.startsWith('https:/')) {
+    if (!url.startsWith('https://')) {
+      url = 'https://' + url.substring(7);
+    }
+  }
+  return url;
+}
+
 // 处理请求
 module.exports = async (req, res) => {
   try {
@@ -242,12 +257,19 @@ module.exports = async (req, res) => {
     // 处理 URL
     let targetUrl = '';
     
-    // 检查是否是完整的 URL 格式（以 http:// 或 https:// 开头）
-    if (originalUrl.match(/^https?:\/\//i)) {
-      // 直接使用完整的 URL
-      targetUrl = originalUrl;
+    // 检查是否是完整的 URL 格式（以 http:// 或 https:// 开头，或者 http:/ 或 https:/ 这种错误格式）
+    if (originalUrl.match(/^https?:\/?\/?/i)) {
+      // 修复 URL 格式并直接使用完整的 URL
+      targetUrl = fixUrl(originalUrl);
       console.log('Direct URL format detected:', targetUrl);
     } else {
+      // 检查是否是 API 路径
+      if (originalUrl.startsWith('api/')) {
+        console.log('API path detected, skipping GitHub proxy processing');
+        res.status(404).send('Not Found: API path should be handled by other endpoints');
+        return;
+      }
+      
       // 解析路径
       let path = pathname.replace(/^\//, '');
       console.log('Parsed path:', path);

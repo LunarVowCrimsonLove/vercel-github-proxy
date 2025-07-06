@@ -1,6 +1,21 @@
 // 调试工具，用于诊断 URL 处理问题
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
+// 修复 URL 格式
+function fixUrl(url) {
+  // 确保 URL 有正确的协议格式
+  if (url.startsWith('http:/')) {
+    if (!url.startsWith('http://')) {
+      url = 'http://' + url.substring(6);
+    }
+  } else if (url.startsWith('https:/')) {
+    if (!url.startsWith('https://')) {
+      url = 'https://' + url.substring(7);
+    }
+  }
+  return url;
+}
+
 module.exports = async (req, res) => {
   try {
     // 获取请求信息
@@ -37,17 +52,22 @@ module.exports = async (req, res) => {
       };
       
       // 检查是否是完整的 URL 格式
-      const isCompleteUrl = originalUrl.match(/^https?:\/\//i);
+      const isCompleteUrl = originalUrl.match(/^https?:\/?\/?/i);
       
       if (isCompleteUrl) {
-        targetUrl = originalUrl;
+        // 修复 URL 格式
+        targetUrl = fixUrl(originalUrl);
+        urlInfo.originalFormat = originalUrl;
+        urlInfo.fixedFormat = targetUrl;
       } else if (originalUrl.startsWith('debug/')) {
         // 如果是调试路径，移除 debug/ 前缀
         const testPath = originalUrl.substring(6); // 去掉 "debug/" 前缀
         
         // 检查测试路径是否是完整 URL
-        if (testPath.match(/^https?:\/\//i)) {
-          targetUrl = testPath;
+        if (testPath.match(/^https?:\/?\/?/i)) {
+          targetUrl = fixUrl(testPath);
+          urlInfo.originalFormat = testPath;
+          urlInfo.fixedFormat = targetUrl;
         } else {
           targetUrl = `https://github.com/${testPath}`;
         }
@@ -70,6 +90,7 @@ module.exports = async (req, res) => {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
           };
           
+          console.log('Testing URL:', targetUrl);
           const response = await fetch(targetUrl, {
             method: 'HEAD',
             headers,
@@ -114,7 +135,8 @@ module.exports = async (req, res) => {
         examples: [
           "/api/debug/DustinWin/proxy-tools/releases/download/mihomo/mihomo-alpha-linux-armv8.tar.gz",
           "/api/debug/https://github.com/DustinWin/proxy-tools/releases/download/mihomo/mihomo-alpha-linux-armv8.tar.gz"
-        ]
+        ],
+        directUsage: "直接使用 /https://github.com/... 格式访问文件"
       },
       env: {
         NODE_ENV: process.env.NODE_ENV || 'unknown',
