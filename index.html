@@ -6,142 +6,159 @@
   <title>GitHub 文件加速</title>
   <style>
     :root {
-      --bg-color: #f6f8fa;
-      --container-bg: #fff;
-      --border-color: #e1e4e8;
-      --accent-color: #0366d6;
-      --github-corner-bg: #151513;
-      --github-corner-fg: #fff;
+      --bg-gradient: linear-gradient(135deg, #232526 0%, #414345 100%);
+      --container-bg: #23272f;
+      --border-color: #32363e;
+      --accent-color: #4f8cff;
+      --accent-hover: #357ae8;
+      --text-main: #f5f6fa;
+      --text-secondary: #bfc4cc;
+      --card-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
+      --input-bg: #23272f;
+      --input-border: #3a3f47;
+      --input-focus: #4f8cff;
+      --example-bg: rgba(255,255,255,0.03);
+      --divider: #2d3138;
+      --emoji-size: 1.7rem;
     }
     body {
-      background: var(--bg-color);
+      background: var(--bg-gradient);
       margin: 0;
       min-height: 100vh;
       font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-      color: #24292e;
+      color: var(--text-main);
       display: flex;
       justify-content: center;
       align-items: center;
     }
     .container {
       background: var(--container-bg);
-      border-radius: 14px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-      max-width: 480px;
+      border-radius: 18px;
+      box-shadow: var(--card-shadow);
+      max-width: 500px;
       width: 100%;
-      padding: 2.5rem 2rem 2rem 2rem;
+      padding: 2.7rem 2.2rem 2.2rem 2.2rem;
       margin: 2rem 0;
       position: relative;
+      border: 1.5px solid var(--border-color);
+      transition: box-shadow 0.2s;
+    }
+    .container:hover {
+      box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.22);
     }
     .title {
-      font-size: 2.2rem;
+      font-size: 2.3rem;
       font-weight: 700;
       text-align: center;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.7rem;
       letter-spacing: 1px;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.7rem;
     }
     .emoji {
-      font-size: 2rem;
+      font-size: var(--emoji-size);
       vertical-align: middle;
-      margin-right: 0.5rem;
     }
     .search-container {
       display: flex;
-      margin-bottom: 1.2rem;
+      margin-bottom: 1.3rem;
       justify-content: center;
     }
     .search-input {
       flex: 1;
       height: 54px;
-      font-size: 1.1rem;
-      border: 1.5px solid var(--border-color);
-      border-radius: 8px 0 0 8px;
+      font-size: 1.08rem;
+      border: 1.5px solid var(--input-border);
+      border-radius: 10px 0 0 10px;
       padding: 0 1.2rem;
       outline: none;
-      transition: border-color 0.2s;
+      background: var(--input-bg);
+      color: var(--text-main);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      box-shadow: none;
     }
     .search-input:focus {
-      border-color: var(--accent-color);
+      border-color: var(--input-focus);
+      box-shadow: 0 0 0 2px rgba(79,140,255,0.12);
     }
     .search-button {
       width: 54px;
       height: 54px;
       background: var(--accent-color);
       border: none;
-      border-radius: 0 8px 8px 0;
+      border-radius: 0 10px 10px 0;
       color: #fff;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.2s;
+      transition: background 0.18s, box-shadow 0.18s;
+      font-size: 1.2rem;
+      box-shadow: none;
     }
     .search-button:hover {
-      background: #0356b6;
+      background: var(--accent-hover);
+      box-shadow: 0 2px 8px 0 rgba(79,140,255,0.10);
     }
     .tips {
-      margin-bottom: 1.2rem;
-      color: #586069;
-      font-size: 0.98rem;
-      line-height: 1.7;
+      margin-bottom: 1.3rem;
+      color: var(--text-secondary);
+      font-size: 1.01rem;
+      line-height: 1.8;
     }
     .tips a {
       color: var(--accent-color);
       text-decoration: underline;
+      transition: color 0.18s;
+    }
+    .tips a:hover {
+      color: var(--accent-hover);
     }
     .example {
       margin-top: 2.5rem;
-      padding: 1.8rem;
-      background: rgba(255,255,255,0.05);
-      border-radius: 12px;
+      padding: 1.7rem 1.3rem 1.3rem 1.3rem;
+      background: var(--example-bg);
+      border-radius: 14px;
       text-align: left;
-      border: 1px solid var(--border-color);
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      border: 1.5px solid var(--divider);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
       overflow-x: auto;
+      color: var(--text-main);
     }
     .example-title {
       font-weight: 600;
-      font-size: 1.08rem;
+      font-size: 1.09rem;
       margin-bottom: 0.7rem;
+      color: var(--accent-color);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
     .example p {
       margin: 0.5rem 0;
       font-size: 1rem;
       padding-left: 1.2rem;
       text-indent: -1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
     .url-part {
       color: var(--accent-color);
       word-break: break-all;
+      text-decoration: underline;
+      cursor: pointer;
+      transition: color 0.18s;
     }
-    .github-corner {
-      position: fixed;
-      top: 0;
-      right: 0;
-      z-index: 999;
+    .url-part:hover {
+      color: var(--accent-hover);
     }
-    .github-corner svg {
-      fill: var(--github-corner-bg);
-      color: var(--github-corner-fg);
-      position: absolute;
-      top: 0;
-      border: 0;
-      right: 0;
-      width: 80px;
-      height: 80px;
-    }
-    .github-corner a,
-    .github-corner a:visited {
-      color: transparent !important;
-      text-decoration: none !important;
-    }
-    .github-corner:hover .octo-arm {
-      animation: octocat-wave 560ms ease-in-out;
-    }
-    @keyframes octocat-wave {
-      0%,100%{transform:rotate(0)}
-      20%,60%{transform:rotate(-25deg)}
-      40%,80%{transform:rotate(10deg)}
+    .divider {
+      border-top: 1px solid var(--divider);
+      margin: 1.2rem 0 1.2rem 0;
     }
     @media (max-width: 640px) {
       .container {
@@ -165,21 +182,10 @@
         font-size: 0.95rem;
         padding-bottom: 0.6rem;
       }
-      .github-corner svg {
-        width: 60px;
-        height: 60px;
-      }
     }
   </style>
 </head>
 <body>
-  <a href="https://github.com/cmliu/CF-Workers-GitHub" target="_blank" class="github-corner" aria-label="View source on Github">
-    <svg viewBox="0 0 250 250" aria-hidden="true">
-      <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
-      <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path>
-      <path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path>
-    </svg>
-  </a>
   <div class="container">
     <div class="title"><span class="emoji">📦</span>GitHub 文件加速</div>
     <form onsubmit="toSubmit(event)" class="search-container">
@@ -192,7 +198,7 @@
         required
       >
       <button type="submit" class="search-button" title="下载">
-        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
           <path d="M13 5l7 7-7 7M5 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
@@ -203,12 +209,12 @@
       <p>⚠️ 注意：暂不支持文件夹下载，本站仅供演示，建议自建</p>
     </div>
     <div class="example">
-      <div class="example-title">📃 合法输入示例：</div>
-      <p>📄 分支源码：<span class="url-part">github.com/username/project/archive/master.zip</span></p>
-      <p>📁 release源码：<span class="url-part">github.com/username/project/archive/v0.1.0.tar.gz</span></p>
-      <p>📂 release文件：<span class="url-part">github.com/username/project/releases/download/v0.1.0/example.zip</span></p>
-      <p>💾 commit文件：<span class="url-part">github.com/username/project/blob/1111111111111111111111111111/filename</span></p>
-      <p>🖨️ gist：<span class="url-part">gist.githubusercontent.com/username/id/raw/file.py</span></p>
+      <div class="example-title">📄 合法输入示例：</div>
+      <p>📄 分支源码：<span class="url-part" onclick="copyUrl(this)">github.com/username/project/archive/master.zip</span></p>
+      <p>📁 release源码：<span class="url-part" onclick="copyUrl(this)">github.com/username/project/archive/v0.1.0.tar.gz</span></p>
+      <p>📂 release文件：<span class="url-part" onclick="copyUrl(this)">github.com/username/project/releases/download/v0.1.0/example.zip</span></p>
+      <p>💾 commit文件：<span class="url-part" onclick="copyUrl(this)">github.com/username/project/blob/e4e8b7c2a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6/main.go</span></p>
+      <p>🖨️ gist：<span class="url-part" onclick="copyUrl(this)">gist.githubusercontent.com/username/id/raw/file.py</span></p>
     </div>
   </div>
   <script>
@@ -224,6 +230,13 @@
       // 跳转到加速链接
       const baseUrl = location.protocol + '//' + location.host + '/';
       window.location.href = baseUrl + url;
+    }
+    // 点击示例可复制
+    function copyUrl(el) {
+      const text = el.textContent;
+      navigator.clipboard.writeText(text);
+      el.style.color = '#6fd6ff';
+      setTimeout(() => { el.style.color = ''; }, 600);
     }
   </script>
 </body>
