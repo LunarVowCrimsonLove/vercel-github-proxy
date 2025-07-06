@@ -1,0 +1,29 @@
+{
+  "name": "vercel-github-proxy",
+  "version": "1.0.0",
+  "description": "GitHub资源加速代理，基于Vercel Serverless Functions",
+  "main": "api/index.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel deploy --prod"
+  },
+  "keywords": [
+    "github",
+    "proxy",
+    "vercel",
+    "serverless"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "node-fetch": "^2.6.9"
+  },
+  "devDependencies": {
+    "vercel": "^28.20.0",
+    "@types/node": "^18.15.0",
+    "@types/node-fetch": "^2.6.4"
+  },
+  "engines": {
+    "node": ">=14"
+  }
+} 
