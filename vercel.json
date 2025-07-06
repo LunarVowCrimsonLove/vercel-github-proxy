@@ -1,6 +1,13 @@
 {
   "version": 2,
+  "functions": {
+    "api/*.js": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  },
   "rewrites": [
+    { "source": "/api/test", "destination": "/api/test.js" },
     { "source": "/(.*)", "destination": "/api/index.js" }
   ],
   "env": {

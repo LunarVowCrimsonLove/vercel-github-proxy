@@ -212,18 +212,18 @@ module.exports = async (req, res) => {
       }
     }
 
-    // 获取请求信息
-    let url;
-    try {
-      url = new URL(req.url, `https://${req.headers.host}`);
-    } catch (error) {
-      console.error('Invalid URL:', error);
-      res.status(400).send('Bad Request: Invalid URL');
-      return;
-    }
+    // 获取请求信息 - 简化 URL 处理
+    console.log('Request received:', {
+      url: req.url,
+      method: req.method,
+      host: req.headers.host
+    });
     
-    const pathname = url.pathname;
+    // 在 Vercel 环境中，我们可以直接使用 req.url 和 req.path
+    const pathname = req.url ? new URL(req.url, 'http://localhost').pathname : '/';
     const userAgent = req.headers['user-agent'] || '';
+    
+    console.log('Processing path:', pathname);
     
     // 检查是否为爬虫
     if (isBot(userAgent)) {
@@ -233,6 +233,7 @@ module.exports = async (req, res) => {
 
     // 处理主页
     if (pathname === '/' || pathname === '') {
+      console.log('Serving homepage');
       // 如果设置了URL302，则进行302跳转
       if (URL302) {
         res.setHeader('Location', URL302);
@@ -255,6 +256,7 @@ module.exports = async (req, res) => {
 
     // 解析路径
     let path = pathname.replace(/^\//, '');
+    console.log('Parsed path:', path);
     
     // 处理自定义前缀
     if (config.prefix && path.startsWith(config.prefix)) {
