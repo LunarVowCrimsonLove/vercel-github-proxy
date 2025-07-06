@@ -105,6 +105,8 @@ const html = `<!DOCTYPE html>
     <div class="footer">
       <p>GitHub 文件加速服务，加速访问 GitHub 的 release、archive、项目文件等资源</p>
       <p>支持 release、archive、raw、blob、gist 等链接的加速</p>
+      <p>直接在域名后添加完整的 GitHub 链接即可，例如：</p>
+      <p><code>https://your-domain.com/https://github.com/user/repo/releases/download/tag/file.zip</code></p>
       <p>Powered by <a href="https://vercel.com" target="_blank">Vercel</a></p>
     </div>
   </div>
@@ -114,18 +116,8 @@ const html = `<!DOCTYPE html>
       if (url) {
         // 获取当前域名作为基础 URL
         const currentHost = window.location.protocol + '//' + window.location.host;
-        // 处理输入的 GitHub URL
-        let processedUrl = url;
-        // 如果包含完整的 GitHub URL，则保留路径部分
-        if (url.includes('github.com')) {
-          processedUrl = url.replace(/^(https?:\/\/)?(www\.)?github\.com/, '');
-        }
-        // 确保路径以斜杠开头
-        if (!processedUrl.startsWith('/')) {
-          processedUrl = '/' + processedUrl;
-        }
-        // 跳转到处理后的 URL
-        window.location.href = currentHost + processedUrl;
+        // 直接在域名后添加完整的 GitHub 链接
+        window.location.href = currentHost + '/' + url;
       }
     }
     
@@ -202,10 +194,14 @@ module.exports = async (req, res) => {
     
     // 获取路径名
     let pathname = '/';
+    let originalUrl = '';
     try {
-      pathname = new URL(req.url, 'http://example.com').pathname;
+      const url = new URL(req.url, `https://${req.headers.host || 'example.com'}`);
+      pathname = url.pathname;
+      originalUrl = url.pathname.substring(1); // 去掉开头的斜杠
+      console.log('URL parsed successfully:', url.href);
     } catch (error) {
-      console.log('URL parsing error, using default pathname:', error);
+      console.error('URL parsing error, using default pathname:', error);
     }
     
     console.log('Processing path:', pathname);
@@ -239,128 +235,137 @@ module.exports = async (req, res) => {
       return;
     }
 
-    // 解析路径
-    let path = pathname.replace(/^\//, '');
-    console.log('Parsed path:', path);
-    
-    // 处理自定义前缀
-    if (config.prefix && path.startsWith(config.prefix)) {
-      path = path.replace(config.prefix, '');
-    }
-    
-    // 匹配不同类型的GitHub URL
-    const releaseMatch = path.match(/^(?:https?:\/\/)?github\.com\/([^\/]+)\/([^\/]+)\/releases\/(?:download|tag)\/([^\/]+)(?:\/(.+))?/i);
-    const archiveMatch = path.match(/^(?:https?:\/\/)?github\.com\/([^\/]+)\/([^\/]+)\/archive\/(.+)/i);
-    const blobMatch = path.match(/^(?:https?:\/\/)?github\.com\/([^\/]+)\/([^\/]+)\/blob\/(.+)/i);
-    const rawMatch = path.match(/^(?:https?:\/\/)?github\.com\/([^\/]+)\/([^\/]+)\/raw\/(.+)/i);
-    const gistMatch = path.match(/^(?:https?:\/\/)?gist\.github\.com\/([^\/]+)\/([^\/]+)\/raw\/(.+)/i);
-    const gistRawMatch = path.match(/^(?:https?:\/\/)?gist\.githubusercontent\.com\/([^\/]+)\/([^\/]+)\/raw\/(.+)/i);
-    const rawUserContentMatch = path.match(/^(?:https?:\/\/)?raw\.githubusercontent\.com\/([^\/]+)\/([^\/]+)\/(.+)/i);
-    const cloneMatch = path.match(/^(?:https?:\/\/)?github\.com\/([^\/]+)\/([^\/]+)(?:\.git)?$/i);
-    const jsDelivrMatch = path.match(/^(?:https?:\/\/)?cdn\.jsdelivr\.net\/gh\/([^\/]+)\/([^\/]+)\/(.+)/i);
-
-    // 检查白名单
-    const checkWhitelist = (owner) => {
-      if (config.whitelist.length === 0) return true;
-      return config.whitelist.includes(owner);
-    };
-
-    // 构建代理URL
+    // 检查是否是完整的 URL 格式（以 http:// 或 https:// 开头）
     let targetUrl = '';
-    let headers = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    };
-
-    // 添加GitHub Token（如果有）
-    if (config.private && GITHUB_TOKEN) {
-      headers['Authorization'] = `token ${GITHUB_TOKEN}`;
-    }
-
-    // 处理不同类型的URL
-    if (releaseMatch) {
-      const [, owner, repo, tag, filePath] = releaseMatch;
-      if (!checkWhitelist(owner)) {
-        res.status(403).send('Forbidden: Repository not in whitelist');
-        return;
-      }
-      
-      if (filePath) {
-        targetUrl = `https://github.com/${owner}/${repo}/releases/download/${tag}/${filePath}`;
-      } else {
-        targetUrl = `https://github.com/${owner}/${repo}/releases/tag/${tag}`;
-      }
-    } else if (archiveMatch) {
-      const [, owner, repo, ref] = archiveMatch;
-      if (!checkWhitelist(owner)) {
-        res.status(403).send('Forbidden: Repository not in whitelist');
-        return;
-      }
-      
-      targetUrl = `https://github.com/${owner}/${repo}/archive/${ref}`;
-    } else if (blobMatch) {
-      const [, owner, repo, ref] = blobMatch;
-      if (!checkWhitelist(owner)) {
-        res.status(403).send('Forbidden: Repository not in whitelist');
-        return;
-      }
-      
-      targetUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${ref}`;
-    } else if (rawMatch) {
-      const [, owner, repo, ref] = rawMatch;
-      if (!checkWhitelist(owner)) {
-        res.status(403).send('Forbidden: Repository not in whitelist');
-        return;
-      }
-      
-      targetUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${ref}`;
-    } else if (gistMatch) {
-      const [, owner, gistId, file] = gistMatch;
-      if (!checkWhitelist(owner)) {
-        res.status(403).send('Forbidden: Repository not in whitelist');
-        return;
-      }
-      
-      targetUrl = `https://gist.githubusercontent.com/${owner}/${gistId}/raw/${file}`;
-    } else if (gistRawMatch) {
-      const [, owner, gistId, file] = gistRawMatch;
-      if (!checkWhitelist(owner)) {
-        res.status(403).send('Forbidden: Repository not in whitelist');
-        return;
-      }
-      
-      targetUrl = `https://gist.githubusercontent.com/${owner}/${gistId}/raw/${file}`;
-    } else if (rawUserContentMatch) {
-      const [, owner, repo, ref] = rawUserContentMatch;
-      if (!checkWhitelist(owner)) {
-        res.status(403).send('Forbidden: Repository not in whitelist');
-        return;
-      }
-      
-      targetUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${ref}`;
-    } else if (cloneMatch) {
-      const [, owner, repo] = cloneMatch;
-      if (!checkWhitelist(owner)) {
-        res.status(403).send('Forbidden: Repository not in whitelist');
-        return;
-      }
-      
-      targetUrl = `https://github.com/${owner}/${repo}.git`;
-    } else if (jsDelivrMatch && config.jsdelivr) {
-      const [, owner, repo, file] = jsDelivrMatch;
-      if (!checkWhitelist(owner)) {
-        res.status(403).send('Forbidden: Repository not in whitelist');
-        return;
-      }
-      
-      targetUrl = `https://cdn.jsdelivr.net/gh/${owner}/${repo}/${file}`;
+    if (originalUrl.match(/^https?:\/\//i)) {
+      // 直接使用完整的 URL
+      targetUrl = originalUrl;
+      console.log('Direct URL format detected:', targetUrl);
     } else {
-      // 不匹配任何规则，尝试作为完整URL处理
-      if (path.startsWith('http')) {
-        targetUrl = path;
+      // 解析路径
+      let path = pathname.replace(/^\//, '');
+      console.log('Parsed path:', path);
+      
+      // 处理自定义前缀
+      if (config.prefix && path.startsWith(config.prefix)) {
+        path = path.replace(config.prefix, '');
+      }
+      
+      // 匹配不同类型的GitHub URL
+      const releaseMatch = path.match(/^(?:https?:\/\/)?github\.com\/([^\/]+)\/([^\/]+)\/releases\/(?:download|tag)\/([^\/]+)(?:\/(.+))?/i);
+      const archiveMatch = path.match(/^(?:https?:\/\/)?github\.com\/([^\/]+)\/([^\/]+)\/archive\/(.+)/i);
+      const blobMatch = path.match(/^(?:https?:\/\/)?github\.com\/([^\/]+)\/([^\/]+)\/blob\/(.+)/i);
+      const rawMatch = path.match(/^(?:https?:\/\/)?github\.com\/([^\/]+)\/([^\/]+)\/raw\/(.+)/i);
+      const gistMatch = path.match(/^(?:https?:\/\/)?gist\.github\.com\/([^\/]+)\/([^\/]+)\/raw\/(.+)/i);
+      const gistRawMatch = path.match(/^(?:https?:\/\/)?gist\.githubusercontent\.com\/([^\/]+)\/([^\/]+)\/raw\/(.+)/i);
+      const rawUserContentMatch = path.match(/^(?:https?:\/\/)?raw\.githubusercontent\.com\/([^\/]+)\/([^\/]+)\/(.+)/i);
+      const cloneMatch = path.match(/^(?:https?:\/\/)?github\.com\/([^\/]+)\/([^\/]+)(?:\.git)?$/i);
+      const jsDelivrMatch = path.match(/^(?:https?:\/\/)?cdn\.jsdelivr\.net\/gh\/([^\/]+)\/([^\/]+)\/(.+)/i);
+
+      // 检查白名单
+      const checkWhitelist = (owner) => {
+        if (config.whitelist.length === 0) return true;
+        return config.whitelist.includes(owner);
+      };
+
+      // 处理不同类型的URL
+      if (releaseMatch) {
+        const [, owner, repo, tag, filePath] = releaseMatch;
+        if (!checkWhitelist(owner)) {
+          res.status(403).send('Forbidden: Repository not in whitelist');
+          return;
+        }
+        
+        if (filePath) {
+          // 直接使用 GitHub 的 releases 下载链接
+          targetUrl = `https://github.com/${owner}/${repo}/releases/download/${tag}/${filePath}`;
+          console.log('Release file download URL:', targetUrl);
+        } else {
+          targetUrl = `https://github.com/${owner}/${repo}/releases/tag/${tag}`;
+        }
+      } else if (archiveMatch) {
+        const [, owner, repo, ref] = archiveMatch;
+        if (!checkWhitelist(owner)) {
+          res.status(403).send('Forbidden: Repository not in whitelist');
+          return;
+        }
+        
+        targetUrl = `https://github.com/${owner}/${repo}/archive/${ref}`;
+      } else if (blobMatch) {
+        const [, owner, repo, ref] = blobMatch;
+        if (!checkWhitelist(owner)) {
+          res.status(403).send('Forbidden: Repository not in whitelist');
+          return;
+        }
+        
+        targetUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${ref}`;
+      } else if (rawMatch) {
+        const [, owner, repo, ref] = rawMatch;
+        if (!checkWhitelist(owner)) {
+          res.status(403).send('Forbidden: Repository not in whitelist');
+          return;
+        }
+        
+        targetUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${ref}`;
+      } else if (gistMatch) {
+        const [, owner, gistId, file] = gistMatch;
+        if (!checkWhitelist(owner)) {
+          res.status(403).send('Forbidden: Repository not in whitelist');
+          return;
+        }
+        
+        targetUrl = `https://gist.githubusercontent.com/${owner}/${gistId}/raw/${file}`;
+      } else if (gistRawMatch) {
+        const [, owner, gistId, file] = gistRawMatch;
+        if (!checkWhitelist(owner)) {
+          res.status(403).send('Forbidden: Repository not in whitelist');
+          return;
+        }
+        
+        targetUrl = `https://gist.githubusercontent.com/${owner}/${gistId}/raw/${file}`;
+      } else if (rawUserContentMatch) {
+        const [, owner, repo, ref] = rawUserContentMatch;
+        if (!checkWhitelist(owner)) {
+          res.status(403).send('Forbidden: Repository not in whitelist');
+          return;
+        }
+        
+        targetUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${ref}`;
+      } else if (cloneMatch) {
+        const [, owner, repo] = cloneMatch;
+        if (!checkWhitelist(owner)) {
+          res.status(403).send('Forbidden: Repository not in whitelist');
+          return;
+        }
+        
+        targetUrl = `https://github.com/${owner}/${repo}.git`;
+      } else if (jsDelivrMatch && config.jsdelivr) {
+        const [, owner, repo, file] = jsDelivrMatch;
+        if (!checkWhitelist(owner)) {
+          res.status(403).send('Forbidden: Repository not in whitelist');
+          return;
+        }
+        
+        targetUrl = `https://cdn.jsdelivr.net/gh/${owner}/${repo}/${file}`;
       } else {
-        // 无法解析的路径，返回404
-        res.status(404).send('Not Found');
-        return;
+        // 尝试直接作为 GitHub 路径处理
+        const directMatch = path.match(/^([^\/]+)\/([^\/]+)\/(.+)/i);
+        if (directMatch) {
+          const [, owner, repo, rest] = directMatch;
+          if (rest.startsWith('releases/download/')) {
+            // 处理直接输入的 releases 下载路径
+            targetUrl = `https://github.com/${path}`;
+            console.log('Direct release path detected:', targetUrl);
+          } else {
+            // 无法解析的路径，返回404
+            res.status(404).send('Not Found: Unable to parse GitHub path');
+            return;
+          }
+        } else {
+          // 无法解析的路径，返回404
+          res.status(404).send('Not Found: Invalid path format');
+          return;
+        }
       }
     }
 
@@ -369,6 +374,28 @@ module.exports = async (req, res) => {
     if (!targetUrl) {
       res.status(400).send('Bad Request: Invalid target URL');
       return;
+    }
+
+    // 检查白名单（对于直接URL格式）
+    if (targetUrl.includes('github.com/') && config.whitelist.length > 0) {
+      const urlMatch = targetUrl.match(/github\.com\/([^\/]+)/i);
+      if (urlMatch) {
+        const owner = urlMatch[1];
+        if (!config.whitelist.includes(owner)) {
+          res.status(403).send('Forbidden: Repository not in whitelist');
+          return;
+        }
+      }
+    }
+
+    // 构建请求头
+    let headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    };
+
+    // 添加GitHub Token（如果有）
+    if (config.private && GITHUB_TOKEN && targetUrl.includes('github.com')) {
+      headers['Authorization'] = `token ${GITHUB_TOKEN}`;
     }
 
     try {
@@ -381,14 +408,55 @@ module.exports = async (req, res) => {
       });
 
       console.log('Response status:', response.status);
+      
+      // 获取文件名（用于设置 Content-Disposition 头）
+      let filename = '';
+      try {
+        const contentDisposition = response.headers.get('content-disposition');
+        if (contentDisposition) {
+          const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/i);
+          if (filenameMatch) {
+            filename = filenameMatch[1];
+          }
+        }
+        
+        // 如果响应头中没有文件名，尝试从URL中提取
+        if (!filename && targetUrl.includes('/')) {
+          filename = targetUrl.split('/').pop();
+        }
+      } catch (error) {
+        console.error('Error extracting filename:', error);
+      }
 
       // 复制响应头
       try {
-        const responseHeaders = response.headers;
+        // 先清除所有可能冲突的头
+        res.removeHeader('content-disposition');
+        res.removeHeader('content-encoding');
+        res.removeHeader('content-length');
+        res.removeHeader('transfer-encoding');
+        
+        // 复制原始响应头
         for (const [key, value] of Object.entries(response.headers.raw())) {
-          if (key.toLowerCase() !== 'content-encoding' && key.toLowerCase() !== 'content-length') {
+          // 跳过一些特殊的头，这些头会由 Vercel 自动处理
+          if (
+            key.toLowerCase() !== 'content-encoding' && 
+            key.toLowerCase() !== 'content-length' &&
+            key.toLowerCase() !== 'transfer-encoding'
+          ) {
             res.setHeader(key, value);
           }
+        }
+        
+        // 对于二进制文件，确保设置正确的 Content-Type 和 Content-Disposition
+        const contentType = response.headers.get('content-type');
+        if (contentType) {
+          res.setHeader('Content-Type', contentType);
+        }
+        
+        // 如果是下载文件，添加 Content-Disposition 头
+        if (filename && (targetUrl.includes('/releases/download/') || targetUrl.includes('/archive/'))) {
+          res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
         }
       } catch (headerError) {
         console.error('Error copying headers:', headerError);
@@ -400,16 +468,32 @@ module.exports = async (req, res) => {
 
       // 返回响应体
       try {
-        const buffer = await response.buffer();
-        res.send(buffer);
-      } catch (bufferError) {
-        console.error('Error reading response body as buffer:', bufferError);
+        // 对于二进制文件，使用流式传输
+        if (response.body) {
+          // 直接流式传输响应体
+          response.body.pipe(res);
+          return; // 重要：提前返回，避免后续代码执行
+        } else {
+          // 如果不支持流式传输，回退到 buffer 方式
+          const buffer = await response.buffer();
+          res.send(buffer);
+        }
+      } catch (streamError) {
+        console.error('Error streaming response:', streamError);
         try {
-          const text = await response.text();
-          res.send(text);
-        } catch (textError) {
-          console.error('Error reading response body as text:', textError);
-          res.status(502).send('Error processing upstream response');
+          // 如果流式传输失败，尝试使用 buffer
+          const buffer = await response.buffer();
+          res.send(buffer);
+        } catch (bufferError) {
+          console.error('Error reading response as buffer:', bufferError);
+          try {
+            // 最后尝试使用 text
+            const text = await response.text();
+            res.send(text);
+          } catch (textError) {
+            console.error('All response reading methods failed:', textError);
+            res.status(502).send('Error processing upstream response');
+          }
         }
       }
     } catch (error) {
