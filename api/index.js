@@ -1,5 +1,6 @@
 // 简化导入方式
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const { Readable } = require('stream');
 
 // 配置
 const config = {
@@ -192,13 +193,16 @@ module.exports = async (req, res) => {
       host: req.headers.host
     });
     
-    // 获取路径名
+    // 获取路径名和查询参数
     let pathname = '/';
     let originalUrl = '';
+    let search = '';
+    
     try {
       const url = new URL(req.url, `https://${req.headers.host || 'example.com'}`);
       pathname = url.pathname;
       originalUrl = url.pathname.substring(1); // 去掉开头的斜杠
+      search = url.search;
       console.log('URL parsed successfully:', url.href);
     } catch (error) {
       console.error('URL parsing error, using default pathname:', error);
@@ -235,8 +239,10 @@ module.exports = async (req, res) => {
       return;
     }
 
-    // 检查是否是完整的 URL 格式（以 http:// 或 https:// 开头）
+    // 处理 URL
     let targetUrl = '';
+    
+    // 检查是否是完整的 URL 格式（以 http:// 或 https:// 开头）
     if (originalUrl.match(/^https?:\/\//i)) {
       // 直接使用完整的 URL
       targetUrl = originalUrl;
@@ -369,6 +375,11 @@ module.exports = async (req, res) => {
       }
     }
 
+    // 添加查询参数（如果有）
+    if (search && !targetUrl.includes('?')) {
+      targetUrl += search;
+    }
+
     console.log('Target URL:', targetUrl);
 
     if (!targetUrl) {
@@ -409,6 +420,13 @@ module.exports = async (req, res) => {
 
       console.log('Response status:', response.status);
       
+      // 如果响应不成功，直接返回错误状态
+      if (!response.ok) {
+        console.error(`Error response from target: ${response.status} ${response.statusText}`);
+        res.status(response.status).send(`Error from upstream server: ${response.statusText}`);
+        return;
+      }
+      
       // 获取文件名（用于设置 Content-Disposition 头）
       let filename = '';
       try {
@@ -422,8 +440,10 @@ module.exports = async (req, res) => {
         
         // 如果响应头中没有文件名，尝试从URL中提取
         if (!filename && targetUrl.includes('/')) {
-          filename = targetUrl.split('/').pop();
+          filename = decodeURIComponent(targetUrl.split('/').pop().split('?')[0]);
         }
+        
+        console.log('Detected filename:', filename);
       } catch (error) {
         console.error('Error extracting filename:', error);
       }
@@ -455,7 +475,11 @@ module.exports = async (req, res) => {
         }
         
         // 如果是下载文件，添加 Content-Disposition 头
-        if (filename && (targetUrl.includes('/releases/download/') || targetUrl.includes('/archive/'))) {
+        if (filename && (
+          targetUrl.includes('/releases/download/') || 
+          targetUrl.includes('/archive/') || 
+          filename.match(/\.(zip|tar\.gz|exe|dmg|apk|jar|iso|bin|rar|7z|gz|xz)$/i)
+        )) {
           res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
         }
       } catch (headerError) {
@@ -471,8 +495,12 @@ module.exports = async (req, res) => {
         // 对于二进制文件，使用流式传输
         if (response.body) {
           // 直接流式传输响应体
-          response.body.pipe(res);
-          return; // 重要：提前返回，避免后续代码执行
+          await new Promise((resolve, reject) => {
+            const stream = Readable.fromWeb(response.body);
+            stream.pipe(res);
+            stream.on('end', resolve);
+            stream.on('error', reject);
+          });
         } else {
           // 如果不支持流式传输，回退到 buffer 方式
           const buffer = await response.buffer();
