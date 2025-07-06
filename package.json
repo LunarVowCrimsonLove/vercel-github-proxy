@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "GitHub资源加速代理，基于Vercel Serverless Functions",
   "main": "api/index.js",
+  "type": "commonjs",
   "scripts": {
     "dev": "vercel dev",
     "deploy": "vercel deploy --prod"

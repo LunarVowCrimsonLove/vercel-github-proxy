@@ -1,4 +1,11 @@
-const fetch = require('node-fetch');
+let fetch;
+try {
+  fetch = require('node-fetch');
+} catch (error) {
+  // 如果 require 失败，可能是因为使用了 ESM 环境
+  console.error('Failed to load node-fetch with require:', error);
+  // 在这种情况下，我们会在处理请求时再次尝试导入
+}
 
 // 配置
 const config = {
@@ -191,200 +198,232 @@ function isBot(userAgent) {
 
 // 处理请求
 module.exports = async (req, res) => {
-  // 获取请求信息
-  const url = new URL(req.url, `https://${req.headers.host}`);
-  const pathname = url.pathname;
-  const userAgent = req.headers['user-agent'] || '';
-  
-  // 检查是否为爬虫
-  if (isBot(userAgent)) {
-    res.status(403).send('Forbidden');
-    return;
-  }
-
-  // 处理主页
-  if (pathname === '/' || pathname === '') {
-    // 如果设置了URL302，则进行302跳转
-    if (URL302) {
-      res.setHeader('Location', URL302);
-      res.status(302).send('');
-      return;
-    }
-    
-    // 如果设置了URL，则显示伪装页面
-    if (URL) {
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.send(disguisedHtml);
-      return;
-    }
-    
-    // 默认显示加速页面
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.send(html);
-    return;
-  }
-
-  // 解析路径
-  let path = pathname.replace(/^\//, '');
-  
-  // 处理自定义前缀
-  if (config.prefix && path.startsWith(config.prefix)) {
-    path = path.replace(config.prefix, '');
-  }
-  
-  // 匹配不同类型的GitHub URL
-  const releaseMatch = path.match(/^(?:https?:\/\/)?github\.com\/([^\/]+)\/([^\/]+)\/releases\/(?:download|tag)\/([^\/]+)(?:\/(.+))?/i);
-  const archiveMatch = path.match(/^(?:https?:\/\/)?github\.com\/([^\/]+)\/([^\/]+)\/archive\/(.+)/i);
-  const blobMatch = path.match(/^(?:https?:\/\/)?github\.com\/([^\/]+)\/([^\/]+)\/blob\/(.+)/i);
-  const rawMatch = path.match(/^(?:https?:\/\/)?github\.com\/([^\/]+)\/([^\/]+)\/raw\/(.+)/i);
-  const gistMatch = path.match(/^(?:https?:\/\/)?gist\.github\.com\/([^\/]+)\/([^\/]+)\/raw\/(.+)/i);
-  const gistRawMatch = path.match(/^(?:https?:\/\/)?gist\.githubusercontent\.com\/([^\/]+)\/([^\/]+)\/raw\/(.+)/i);
-  const rawUserContentMatch = path.match(/^(?:https?:\/\/)?raw\.githubusercontent\.com\/([^\/]+)\/([^\/]+)\/(.+)/i);
-  const cloneMatch = path.match(/^(?:https?:\/\/)?github\.com\/([^\/]+)\/([^\/]+)(?:\.git)?$/i);
-  const jsDelivrMatch = path.match(/^(?:https?:\/\/)?cdn\.jsdelivr\.net\/gh\/([^\/]+)\/([^\/]+)\/(.+)/i);
-
-  // 检查白名单
-  const checkWhitelist = (owner) => {
-    if (config.whitelist.length === 0) return true;
-    return config.whitelist.includes(owner);
-  };
-
-  // 构建代理URL
-  let targetUrl = '';
-  let headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-  };
-
-  // 添加GitHub Token（如果有）
-  if (config.private && GITHUB_TOKEN) {
-    headers['Authorization'] = `token ${GITHUB_TOKEN}`;
-  }
-
-  // 处理不同类型的URL
-  if (releaseMatch) {
-    const [, owner, repo, tag, filePath] = releaseMatch;
-    if (!checkWhitelist(owner)) {
-      res.status(403).send('Forbidden: Repository not in whitelist');
-      return;
-    }
-    
-    if (filePath) {
-      targetUrl = `https://github.com/${owner}/${repo}/releases/download/${tag}/${filePath}`;
-    } else {
-      targetUrl = `https://github.com/${owner}/${repo}/releases/tag/${tag}`;
-    }
-  } else if (archiveMatch) {
-    const [, owner, repo, ref] = archiveMatch;
-    if (!checkWhitelist(owner)) {
-      res.status(403).send('Forbidden: Repository not in whitelist');
-      return;
-    }
-    
-    targetUrl = `https://github.com/${owner}/${repo}/archive/${ref}`;
-  } else if (blobMatch) {
-    const [, owner, repo, ref] = blobMatch;
-    if (!checkWhitelist(owner)) {
-      res.status(403).send('Forbidden: Repository not in whitelist');
-      return;
-    }
-    
-    targetUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${ref}`;
-  } else if (rawMatch) {
-    const [, owner, repo, ref] = rawMatch;
-    if (!checkWhitelist(owner)) {
-      res.status(403).send('Forbidden: Repository not in whitelist');
-      return;
-    }
-    
-    targetUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${ref}`;
-  } else if (gistMatch) {
-    const [, owner, gistId, file] = gistMatch;
-    if (!checkWhitelist(owner)) {
-      res.status(403).send('Forbidden: Repository not in whitelist');
-      return;
-    }
-    
-    targetUrl = `https://gist.githubusercontent.com/${owner}/${gistId}/raw/${file}`;
-  } else if (gistRawMatch) {
-    const [, owner, gistId, file] = gistRawMatch;
-    if (!checkWhitelist(owner)) {
-      res.status(403).send('Forbidden: Repository not in whitelist');
-      return;
-    }
-    
-    targetUrl = `https://gist.githubusercontent.com/${owner}/${gistId}/raw/${file}`;
-  } else if (rawUserContentMatch) {
-    const [, owner, repo, ref] = rawUserContentMatch;
-    if (!checkWhitelist(owner)) {
-      res.status(403).send('Forbidden: Repository not in whitelist');
-      return;
-    }
-    
-    targetUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${ref}`;
-  } else if (cloneMatch) {
-    const [, owner, repo] = cloneMatch;
-    if (!checkWhitelist(owner)) {
-      res.status(403).send('Forbidden: Repository not in whitelist');
-      return;
-    }
-    
-    targetUrl = `https://github.com/${owner}/${repo}.git`;
-  } else if (jsDelivrMatch && config.jsdelivr) {
-    const [, owner, repo, file] = jsDelivrMatch;
-    if (!checkWhitelist(owner)) {
-      res.status(403).send('Forbidden: Repository not in whitelist');
-      return;
-    }
-    
-    targetUrl = `https://cdn.jsdelivr.net/gh/${owner}/${repo}/${file}`;
-  } else {
-    // 不匹配任何规则，尝试作为完整URL处理
-    if (path.startsWith('http')) {
-      targetUrl = path;
-    } else {
-      // 无法解析的路径，返回404
-      res.status(404).send('Not Found');
-      return;
-    }
-  }
-
   try {
-    // 发送代理请求
-    const response = await fetch(targetUrl, {
-      headers,
-      method: req.method,
-      redirect: 'follow'
-    });
-
-    // 复制响应头
-    const responseHeaders = response.headers;
-    for (const [key, value] of responseHeaders.entries()) {
-      if (key.toLowerCase() !== 'content-encoding' && key.toLowerCase() !== 'content-length') {
-        res.setHeader(key, value);
+    // 确保 fetch 可用
+    if (!fetch) {
+      try {
+        // 尝试动态导入 (ESM 方式)
+        const module = await import('node-fetch');
+        fetch = module.default;
+      } catch (error) {
+        console.error('Failed to import node-fetch:', error);
+        res.status(500).send('Server configuration error: node-fetch not available');
+        return;
       }
     }
 
-    // 设置状态码
-    res.status(response.status);
-
-    // 返回响应体
+    // 获取请求信息
+    let url;
     try {
-      // 尝试使用 buffer() 方法
-      const buffer = await response.buffer();
-      res.send(buffer);
-    } catch (bufferError) {
+      url = new URL(req.url, `https://${req.headers.host}`);
+    } catch (error) {
+      console.error('Invalid URL:', error);
+      res.status(400).send('Bad Request: Invalid URL');
+      return;
+    }
+    
+    const pathname = url.pathname;
+    const userAgent = req.headers['user-agent'] || '';
+    
+    // 检查是否为爬虫
+    if (isBot(userAgent)) {
+      res.status(403).send('Forbidden');
+      return;
+    }
+
+    // 处理主页
+    if (pathname === '/' || pathname === '') {
+      // 如果设置了URL302，则进行302跳转
+      if (URL302) {
+        res.setHeader('Location', URL302);
+        res.status(302).send('');
+        return;
+      }
+      
+      // 如果设置了URL，则显示伪装页面
+      if (URL) {
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.send(disguisedHtml);
+        return;
+      }
+      
+      // 默认显示加速页面
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.send(html);
+      return;
+    }
+
+    // 解析路径
+    let path = pathname.replace(/^\//, '');
+    
+    // 处理自定义前缀
+    if (config.prefix && path.startsWith(config.prefix)) {
+      path = path.replace(config.prefix, '');
+    }
+    
+    // 匹配不同类型的GitHub URL
+    const releaseMatch = path.match(/^(?:https?:\/\/)?github\.com\/([^\/]+)\/([^\/]+)\/releases\/(?:download|tag)\/([^\/]+)(?:\/(.+))?/i);
+    const archiveMatch = path.match(/^(?:https?:\/\/)?github\.com\/([^\/]+)\/([^\/]+)\/archive\/(.+)/i);
+    const blobMatch = path.match(/^(?:https?:\/\/)?github\.com\/([^\/]+)\/([^\/]+)\/blob\/(.+)/i);
+    const rawMatch = path.match(/^(?:https?:\/\/)?github\.com\/([^\/]+)\/([^\/]+)\/raw\/(.+)/i);
+    const gistMatch = path.match(/^(?:https?:\/\/)?gist\.github\.com\/([^\/]+)\/([^\/]+)\/raw\/(.+)/i);
+    const gistRawMatch = path.match(/^(?:https?:\/\/)?gist\.githubusercontent\.com\/([^\/]+)\/([^\/]+)\/raw\/(.+)/i);
+    const rawUserContentMatch = path.match(/^(?:https?:\/\/)?raw\.githubusercontent\.com\/([^\/]+)\/([^\/]+)\/(.+)/i);
+    const cloneMatch = path.match(/^(?:https?:\/\/)?github\.com\/([^\/]+)\/([^\/]+)(?:\.git)?$/i);
+    const jsDelivrMatch = path.match(/^(?:https?:\/\/)?cdn\.jsdelivr\.net\/gh\/([^\/]+)\/([^\/]+)\/(.+)/i);
+
+    // 检查白名单
+    const checkWhitelist = (owner) => {
+      if (config.whitelist.length === 0) return true;
+      return config.whitelist.includes(owner);
+    };
+
+    // 构建代理URL
+    let targetUrl = '';
+    let headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    };
+
+    // 添加GitHub Token（如果有）
+    if (config.private && GITHUB_TOKEN) {
+      headers['Authorization'] = `token ${GITHUB_TOKEN}`;
+    }
+
+    // 处理不同类型的URL
+    if (releaseMatch) {
+      const [, owner, repo, tag, filePath] = releaseMatch;
+      if (!checkWhitelist(owner)) {
+        res.status(403).send('Forbidden: Repository not in whitelist');
+        return;
+      }
+      
+      if (filePath) {
+        targetUrl = `https://github.com/${owner}/${repo}/releases/download/${tag}/${filePath}`;
+      } else {
+        targetUrl = `https://github.com/${owner}/${repo}/releases/tag/${tag}`;
+      }
+    } else if (archiveMatch) {
+      const [, owner, repo, ref] = archiveMatch;
+      if (!checkWhitelist(owner)) {
+        res.status(403).send('Forbidden: Repository not in whitelist');
+        return;
+      }
+      
+      targetUrl = `https://github.com/${owner}/${repo}/archive/${ref}`;
+    } else if (blobMatch) {
+      const [, owner, repo, ref] = blobMatch;
+      if (!checkWhitelist(owner)) {
+        res.status(403).send('Forbidden: Repository not in whitelist');
+        return;
+      }
+      
+      targetUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${ref}`;
+    } else if (rawMatch) {
+      const [, owner, repo, ref] = rawMatch;
+      if (!checkWhitelist(owner)) {
+        res.status(403).send('Forbidden: Repository not in whitelist');
+        return;
+      }
+      
+      targetUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${ref}`;
+    } else if (gistMatch) {
+      const [, owner, gistId, file] = gistMatch;
+      if (!checkWhitelist(owner)) {
+        res.status(403).send('Forbidden: Repository not in whitelist');
+        return;
+      }
+      
+      targetUrl = `https://gist.githubusercontent.com/${owner}/${gistId}/raw/${file}`;
+    } else if (gistRawMatch) {
+      const [, owner, gistId, file] = gistRawMatch;
+      if (!checkWhitelist(owner)) {
+        res.status(403).send('Forbidden: Repository not in whitelist');
+        return;
+      }
+      
+      targetUrl = `https://gist.githubusercontent.com/${owner}/${gistId}/raw/${file}`;
+    } else if (rawUserContentMatch) {
+      const [, owner, repo, ref] = rawUserContentMatch;
+      if (!checkWhitelist(owner)) {
+        res.status(403).send('Forbidden: Repository not in whitelist');
+        return;
+      }
+      
+      targetUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${ref}`;
+    } else if (cloneMatch) {
+      const [, owner, repo] = cloneMatch;
+      if (!checkWhitelist(owner)) {
+        res.status(403).send('Forbidden: Repository not in whitelist');
+        return;
+      }
+      
+      targetUrl = `https://github.com/${owner}/${repo}.git`;
+    } else if (jsDelivrMatch && config.jsdelivr) {
+      const [, owner, repo, file] = jsDelivrMatch;
+      if (!checkWhitelist(owner)) {
+        res.status(403).send('Forbidden: Repository not in whitelist');
+        return;
+      }
+      
+      targetUrl = `https://cdn.jsdelivr.net/gh/${owner}/${repo}/${file}`;
+    } else {
+      // 不匹配任何规则，尝试作为完整URL处理
+      if (path.startsWith('http')) {
+        targetUrl = path;
+      } else {
+        // 无法解析的路径，返回404
+        res.status(404).send('Not Found');
+        return;
+      }
+    }
+
+    try {
+      // 发送代理请求
+      const response = await fetch(targetUrl, {
+        headers,
+        method: req.method,
+        redirect: 'follow'
+      });
+
+      // 复制响应头
       try {
-        // 如果 buffer() 失败，尝试使用 arrayBuffer()
+        const responseHeaders = response.headers;
+        // 使用 forEach 而不是 entries() 来增加兼容性
+        responseHeaders.forEach((value, key) => {
+          if (key.toLowerCase() !== 'content-encoding' && key.toLowerCase() !== 'content-length') {
+            res.setHeader(key, value);
+          }
+        });
+      } catch (headerError) {
+        console.error('Error copying headers:', headerError);
+        // 继续执行，不因为头部复制失败而中断
+      }
+
+      // 设置状态码
+      res.status(response.status);
+
+      // 返回响应体
+      try {
+        // 尝试使用 arrayBuffer() 方法（更广泛支持）
         const arrayBuffer = await response.arrayBuffer();
         res.send(Buffer.from(arrayBuffer));
-      } catch (arrayBufferError) {
-        // 如果两种方法都失败，尝试使用 text()
-        const text = await response.text();
-        res.send(text);
+      } catch (bufferError) {
+        console.error('Error reading response body as arrayBuffer:', bufferError);
+        try {
+          // 如果 arrayBuffer() 失败，尝试使用 text()
+          const text = await response.text();
+          res.send(text);
+        } catch (textError) {
+          console.error('Error reading response body as text:', textError);
+          res.status(502).send('Error processing upstream response');
+        }
       }
+    } catch (error) {
+      console.error('Proxy error:', error);
+      res.status(500).send('Internal Server Error');
     }
   } catch (error) {
-    console.error('Proxy error:', error);
+    console.error('Unhandled error:', error);
     res.status(500).send('Internal Server Error');
   }
 }; 
