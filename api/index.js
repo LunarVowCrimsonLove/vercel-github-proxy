@@ -1,11 +1,5 @@
-let fetch;
-try {
-  fetch = require('node-fetch');
-} catch (error) {
-  // 如果 require 失败，可能是因为使用了 ESM 环境
-  console.error('Failed to load node-fetch with require:', error);
-  // 在这种情况下，我们会在处理请求时再次尝试导入
-}
+// 简化导入方式
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 // 配置
 const config = {
@@ -199,34 +193,25 @@ function isBot(userAgent) {
 // 处理请求
 module.exports = async (req, res) => {
   try {
-    // 确保 fetch 可用
-    if (!fetch) {
-      try {
-        // 尝试动态导入 (ESM 方式)
-        const module = await import('node-fetch');
-        fetch = module.default;
-      } catch (error) {
-        console.error('Failed to import node-fetch:', error);
-        res.status(500).send('Server configuration error: node-fetch not available');
-        return;
-      }
-    }
-
-    // 获取请求信息 - 简化 URL 处理
+    // 获取请求信息
     console.log('Request received:', {
       url: req.url,
       method: req.method,
       host: req.headers.host
     });
     
-    // 在 Vercel 环境中，我们可以直接使用 req.url 和 req.path
-    const pathname = req.url ? new URL(req.url, 'http://localhost').pathname : '/';
-    const userAgent = req.headers['user-agent'] || '';
+    // 获取路径名
+    let pathname = '/';
+    try {
+      pathname = new URL(req.url, 'http://example.com').pathname;
+    } catch (error) {
+      console.log('URL parsing error, using default pathname:', error);
+    }
     
     console.log('Processing path:', pathname);
     
     // 检查是否为爬虫
-    if (isBot(userAgent)) {
+    if (isBot(req.headers['user-agent'] || '')) {
       res.status(403).send('Forbidden');
       return;
     }
@@ -379,23 +364,32 @@ module.exports = async (req, res) => {
       }
     }
 
+    console.log('Target URL:', targetUrl);
+
+    if (!targetUrl) {
+      res.status(400).send('Bad Request: Invalid target URL');
+      return;
+    }
+
     try {
       // 发送代理请求
+      console.log('Fetching from:', targetUrl);
       const response = await fetch(targetUrl, {
         headers,
         method: req.method,
         redirect: 'follow'
       });
 
+      console.log('Response status:', response.status);
+
       // 复制响应头
       try {
         const responseHeaders = response.headers;
-        // 使用 forEach 而不是 entries() 来增加兼容性
-        responseHeaders.forEach((value, key) => {
+        for (const [key, value] of Object.entries(response.headers.raw())) {
           if (key.toLowerCase() !== 'content-encoding' && key.toLowerCase() !== 'content-length') {
             res.setHeader(key, value);
           }
-        });
+        }
       } catch (headerError) {
         console.error('Error copying headers:', headerError);
         // 继续执行，不因为头部复制失败而中断
@@ -406,13 +400,11 @@ module.exports = async (req, res) => {
 
       // 返回响应体
       try {
-        // 尝试使用 arrayBuffer() 方法（更广泛支持）
-        const arrayBuffer = await response.arrayBuffer();
-        res.send(Buffer.from(arrayBuffer));
+        const buffer = await response.buffer();
+        res.send(buffer);
       } catch (bufferError) {
-        console.error('Error reading response body as arrayBuffer:', bufferError);
+        console.error('Error reading response body as buffer:', bufferError);
         try {
-          // 如果 arrayBuffer() 失败，尝试使用 text()
           const text = await response.text();
           res.send(text);
         } catch (textError) {
@@ -422,10 +414,10 @@ module.exports = async (req, res) => {
       }
     } catch (error) {
       console.error('Proxy error:', error);
-      res.status(500).send('Internal Server Error');
+      res.status(500).send(`Internal Server Error: ${error.message}`);
     }
   } catch (error) {
     console.error('Unhandled error:', error);
-    res.status(500).send('Internal Server Error');
+    res.status(500).send(`Internal Server Error: ${error.message}`);
   }
 }; 

@@ -17,7 +17,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "node-fetch": "2.6.7"
+    "node-fetch": "^2.7.0"
   },
   "devDependencies": {
     "vercel": "^28.20.0",
