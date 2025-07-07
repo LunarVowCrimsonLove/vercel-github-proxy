@@ -7,7 +7,6 @@
 - 支持加速 GitHub 的 release、archive、raw、blob 等资源
 - 支持 git clone 加速
 - 支持访问私有仓库（需配置 GitHub Token）
-- 支持 jsDelivr 镜像加速
 - 提供简洁的 Web 界面
 - 支持主页伪装和 302 跳转
 - 内置爬虫屏蔽功能
