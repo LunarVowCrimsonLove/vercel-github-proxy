@@ -24,7 +24,7 @@
 ### 方法二：通过 Vercel CLI 部署
 
 1. 安装 Vercel CLI：`npm i -g vercel`
-2. 克隆本仓库：`git clone https://github.com/yourusername/vercel-github-proxy.git`
+2. 克隆本仓库：`git clone https://github.com/goukey/vercel-github-proxy.git`
 3. 进入项目目录：`cd vercel-github-proxy`
 4. 安装依赖：`npm install`
 5. 部署到 Vercel：`vercel --prod`
