@@ -1,235 +1,260 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GitHub 文件加速</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="img.png">
   <style>
     :root {
-      --bg-gradient: linear-gradient(135deg, #232526 0%, #414345 100%);
-      --container-bg: #23272f;
-      --border-color: #32363e;
-      --accent-color: #4f8cff;
-      --accent-hover: #357ae8;
-      --text-main: #f5f6fa;
-      --text-secondary: #bfc4cc;
-      --card-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
-      --input-bg: #23272f;
-      --input-border: #3a3f47;
-      --input-focus: #4f8cff;
-      --example-bg: rgba(255,255,255,0.03);
-      --divider: #2d3138;
-      --emoji-size: 1.7rem;
+      --primary-color: #0d1117;
+      --secondary-color: #161b22;
+      --text-color: #f0f6fc;
+      --accent-color: #58a6ff;
+      --gradient-start: #24292e;
+      --gradient-end: #0d1117;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      --border-color: rgba(255, 255, 255, 0.1);
+      --github-corner-bg: #f0f6fc;
+      --github-corner-fg: rgb(21,26,31);
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
     body {
-      background: var(--bg-gradient);
-      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       min-height: 100vh;
-      font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-      color: var(--text-main);
+      background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+      color: var(--text-color);
       display: flex;
       justify-content: center;
       align-items: center;
+      padding: 20px;
     }
     .container {
-      max-width: 540px;
       width: 100%;
-      padding: 2.7rem 2.2rem 2.2rem 2.2rem;
-      margin: 2rem 0;
-      position: relative;
-      box-sizing: border-box;
+      max-width: 800px;
+      padding: 40px 20px;
+      text-align: center;
     }
     .title {
-      font-size: 2.3rem;
-      font-weight: 700;
-      text-align: center;
-      margin-bottom: 1.7rem;
-      letter-spacing: 1px;
-      color: var(--text-main);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.7rem;
+      font-size: 2.5rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      color: var(--text-color);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+      letter-spacing: -0.5px;
     }
-    .emoji {
-      font-size: var(--emoji-size);
-      vertical-align: middle;
-    }
-    .search-container {
-      display: flex;
-      margin-bottom: 1.3rem;
-      justify-content: center;
-    }
-    .search-input {
-      flex: 1;
-      height: 54px;
-      font-size: 1.08rem;
-      border: 1.5px solid var(--input-border);
-      border-radius: 10px 0 0 10px;
-      padding: 0 1.2rem;
-      outline: none;
-      background: var(--input-bg);
-      color: var(--text-main);
-      transition: border-color 0.2s, box-shadow 0.2s;
-      box-shadow: none;
-    }
-    .search-input:focus {
-      border-color: var(--input-focus);
-      box-shadow: 0 0 0 2px rgba(79,140,255,0.12);
-    }
-    .search-button {
-      width: 54px;
-      height: 54px;
-      background: var(--accent-color);
-      border: none;
-      border-radius: 0 10px 10px 0;
-      color: #fff;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.18s, box-shadow 0.18s;
-      font-size: 1.2rem;
-      box-shadow: none;
-    }
-    .search-button:hover {
-      background: var(--accent-hover);
-      box-shadow: 0 2px 8px 0 rgba(79,140,255,0.10);
-    }
-    .tips {
-      margin-bottom: 1.3rem;
-      color: var(--text-secondary);
-      font-size: 1.01rem;
-      line-height: 1.8;
+    .title .emoji {
+      display: inline-block;
+      color: #f1fa8c;
+      margin-right: 8px;
     }
     .tips a {
       color: var(--accent-color);
-      text-decoration: underline;
-      transition: color 0.18s;
+      text-decoration: none;
+      border-bottom: 1px dashed rgba(88, 166, 255, 0.5);
+      transition: all 0.2s ease;
     }
     .tips a:hover {
-      color: var(--accent-hover);
+      color: #a2d2ff;
+      border-bottom-color: #a2d2ff;
+    }
+    .search-container {
+      position: relative;
+      max-width: 600px;
+      margin: 2rem auto;
+    }
+    .search-input {
+      width: 100%;
+      height: 56px;
+      padding: 0 60px 0 24px;
+      font-size: 1rem;
+      color: #1f2937;
+      background: rgba(255, 255, 255, 0.95);
+      border: 2px solid transparent;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      transition: all 0.3s ease;
+    }
+    .search-input:focus {
+      border-color: var(--accent-color);
+      background: white;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.3);
+    }
+    .search-button {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 44px;
+      height: 44px;
+      border: none;
+      border-radius: 8px;
+      background: var(--accent-color);
+      color: white;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .search-button:hover {
+      background: #4187d7;
+      transform: translateY(-50%) scale(1.05);
+    }
+    .tips {
+      margin-top: 2rem;
+      color: rgba(240, 246, 252, 0.8);
+      line-height: 1.6;
+      text-align: left;
+      padding-left: 1.8rem;
+    }
+    .example-title {
+      color: var(--accent-color);
+      margin-bottom: 1.5rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      position: relative;
+      padding-bottom: 0.8rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .example p {
+      margin: 0.9rem 0;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 0.95rem;
+      color: rgba(240, 246, 252, 0.9);
+      padding-left: 1.5rem;
+      line-height: 1.4;
+      word-wrap: break-word;
+      word-break: break-all;
+      overflow-wrap: break-word;
     }
     .example {
       margin-top: 2.5rem;
-      padding: 1.7rem 1.3rem 1.3rem 1.3rem;
-      background: var(--example-bg);
-      border-radius: 14px;
+      padding: 1.8rem;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
       text-align: left;
-      border: 1.5px solid var(--divider);
-      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      border: 1px solid var(--border-color);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
       overflow-x: auto;
-      color: var(--text-main);
-    }
-    .example-title {
-      font-weight: 600;
-      font-size: 1.09rem;
-      margin-bottom: 0.7rem;
-      color: var(--accent-color);
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    .example p {
-      margin: 0.5rem 0;
-      font-size: 1rem;
-      padding-left: 1.2rem;
-      text-indent: -1.2rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
     }
     .url-part {
       color: var(--accent-color);
-      word-break: break-all;
-      text-decoration: underline;
-      cursor: pointer;
-      transition: color 0.18s;
     }
-    .url-part:hover {
-      color: var(--accent-hover);
+    .github-corner {
+      position: fixed;
+      top: 0;
+      right: 0;
+      z-index: 999;
     }
-    .divider {
-      border-top: 1px solid var(--divider);
-      margin: 1.2rem 0 1.2rem 0;
+    .github-corner svg {
+      fill: var(--github-corner-bg);
+      color: var(--github-corner-fg);
+      position: absolute;
+      top: 0;
+      border: 0;
+      right: 0;
+      width: 80px;
+      height: 80px;
+    }
+    .github-corner a,
+    .github-corner a:visited {
+      color: var(--github-corner-fg) !important;
+    }
+    .github-corner a,
+    .github-corner a:visited {
+      color: transparent !important;
+      text-decoration: none !important;
+    }
+    .github-corner .octo-body,
+    .github-corner .octo-arm {
+      fill: var(--github-corner-fg) !important;
+    }
+    .github-corner:hover .octo-arm {
+      animation: octocat-wave 560ms ease-in-out;
+    }
+    @keyframes octocat-wave {
+      0%, 100% { transform: rotate(0); }
+      20%, 60% { transform: rotate(-25deg); }
+      40%, 80% { transform: rotate(10deg); }
     }
     @media (max-width: 640px) {
       .container {
-        padding: 1.2rem 0.5rem;
+        padding: 20px;
       }
       .title {
-        font-size: 1.5rem;
+        font-size: 2rem;
       }
       .search-input {
-        height: 44px;
-        font-size: 0.98rem;
+        height: 50px;
+        font-size: 0.9rem;
       }
       .search-button {
-        width: 44px;
-        height: 44px;
+        width: 38px;
+        height: 38px;
       }
       .example {
         padding: 1rem;
+      }
+      .example p {
+        font-size: 0.85rem;
+        padding-left: 0.8rem;
+        margin: 0.7rem 0;
       }
       .example-title {
         font-size: 0.95rem;
         padding-bottom: 0.6rem;
       }
+      .github-corner svg {
+        width: 60px;
+        height: 60px;
+      }
     }
   </style>
 </head>
 <body>
+  <a href="https://github.com/cmliu/CF-Workers-GitHub" target="_blank" class="github-corner" aria-label="View source on Github">
+    <img src="img.png" alt="GitHub" style="width:80px;height:80px;position:absolute;top:0;right:0;z-index:999;border:0;" />
+  </a>
   <div class="container">
-    <div class="title"><span class="emoji">📦</span>GitHub 文件加速</div>
+    <h1 class="title"><span class="emoji">📦</span>GitHub 文件加速</h1>
     <form onsubmit="toSubmit(event)" class="search-container">
       <input 
         type="text" 
         class="search-input"
-        id="github-url"
+        name="q" 
         placeholder="请输入 GitHub 文件链接"
-        autocomplete="off"
+        pattern="^((https|http):\/\/)?(github\.com\/.+?\/.+?\/(?:releases|archive|blob|raw|suites)|((?:raw|gist)\.(?:githubusercontent|github)\.com))\/.+$" 
         required
       >
-      <button type="submit" class="search-button" title="下载">
-        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+      <button type="submit" class="search-button">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path d="M13 5l7 7-7 7M5 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
     </form>
     <div class="tips">
-      <p>✨ 支持带协议头(https://)或不带的 GitHub 链接，直接回车或点击右侧按钮即可加速下载</p>
-      <p>🚀 支持 release、archive、raw、blob、gist 等资源类型</p>
-      <p>⚠️ 注意：暂不支持文件夹下载，本站仅供演示，建议自建</p>
+      <p>✨ 支持带协议头(https://)或不带的GitHub链接，更多用法见<a href="https://hunsh.net/archives/23/">文档说明</a></p>
+      <p>🚀 release、archive使用cf加速，文件会跳转至JsDelivr</p>
+      <p>⚠️ 注意：暂不支持文件夹下载</p>
     </div>
     <div class="example">
-      <div class="example-title">📄 合法输入示例：</div>
-      <p>📄 分支源码：<span class="url-part" onclick="copyUrl(this)">github.com/username/project/archive/master.zip</span></p>
-      <p>📁 release源码：<span class="url-part" onclick="copyUrl(this)">github.com/username/project/archive/v0.1.0.tar.gz</span></p>
-      <p>📂 release文件：<span class="url-part" onclick="copyUrl(this)">github.com/username/project/releases/download/v0.1.0/example.zip</span></p>
-      <p>💾 commit文件：<span class="url-part" onclick="copyUrl(this)">github.com/username/project/blob/e4e8b7c2a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6/main.go</span></p>
-      <p>🖨️ gist：<span class="url-part" onclick="copyUrl(this)">gist.githubusercontent.com/username/id/raw/file.py</span></p>
+      <div class="example-title">📃 合法输入示例：</div>
+      <p>📄 分支源码：<span class="url-part">github.com/hunshcn/project/archive/master.zip</span></p>
+      <p>📁 release源码：<span class="url-part">github.com/hunshcn/project/archive/v0.1.0.tar.gz</span></p>
+      <p>📂 release文件：<span class="url-part">github.com/hunshcn/project/releases/download/v0.1.0/example.zip</span></p>
+      <p>💾 commit文件：<span class="url-part">github.com/hunshcn/project/blob/123/filename</span></p>
+      <p>🖨️ gist：<span class="url-part">gist.githubusercontent.com/cielpy/123/raw/cmd.py</span></p>
     </div>
   </div>
   <script>
     function toSubmit(e) {
       e.preventDefault();
-      const input = document.getElementById('github-url');
-      let url = input.value.trim();
-      if (!url) return;
-      // 自动补全 https://
-      if (!/^https?:\/\//i.test(url) && url.includes('github.com')) {
-        url = 'https://' + url;
-      }
-      // 跳转到加速链接
-      const baseUrl = location.protocol + '//' + location.host + '/';
-      window.location.href = baseUrl + url;
-    }
-    // 点击示例可复制
-    function copyUrl(el) {
-      const text = el.textContent;
-      navigator.clipboard.writeText(text);
-      el.style.color = '#6fd6ff';
-      setTimeout(() => { el.style.color = ''; }, 600);
+      const input = document.getElementsByName('q')[0];
+      const baseUrl = location.href.substr(0, location.href.lastIndexOf('/') + 1);
+      window.open(baseUrl + input.value);
     }
   </script>
 </body>
