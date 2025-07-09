@@ -32,6 +32,7 @@
       background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
       color: var(--text-color);
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
       padding: 20px;
@@ -82,6 +83,7 @@
       position: relative;
       z-index: 1;
       border: 2px solid var(--border-color);
+      margin: 0 auto;
     }
     .moe-illust {
       width: 120px;
@@ -214,6 +216,7 @@
     @media (max-width: 640px) {
       .container {
         padding: 16px;
+        margin: 0 auto;
       }
       .title {
         font-size: 2rem;
